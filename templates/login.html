@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ورود | کوماچ‌پزی مقدس</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef6f5;font-family:Tahoma,Arial;display:flex;min-height:100vh;align-items:center;justify-content:center;color:#17302f}
+.box{background:white;width:min(92%,400px);padding:28px;border-radius:22px;box-shadow:0 8px 30px #0002;text-align:center}
+.logo{font-size:42px}.box h1{font-size:22px;margin:8px}.box p{color:#718080;font-size:13px}
+input{width:100%;padding:13px;margin:6px 0;border:1px solid #ddd;border-radius:12px;font:inherit}
+button{width:100%;padding:13px;background:#0f766e;color:white;border:0;border-radius:12px;font:inherit;margin-top:8px}
+.err{background:#fee2e2;color:#a33;padding:9px;border-radius:10px;font-size:12px}
+.hint{font-size:11px;color:#888;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="logo">🍽️</div>
+<h1>کوماچ‌پزی مقدس</h1>
+<p>سیستم حسابداری</p>
+{% with messages=get_flashed_messages() %}
+{% for m in messages %}<div class="err">{{m}}</div>{% endfor %}
+{% endwith %}
+<form method="post">
+<input name="username" placeholder="نام کاربری" required>
+<input name="password" type="password" placeholder="رمز عبور" required>
+<button>ورود به حساب</button>
+</form>
+<div class="hint">مالک اولیه: owner / 1234<br>همکار اولیه: worker / 1234</div>
+</div>
+</body>
+</html>

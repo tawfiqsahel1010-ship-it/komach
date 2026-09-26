@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>حسابداری کوماچ‌پزی مقدس</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f7f6;color:#17302f;font-family:Tahoma,Arial}
+header{background:linear-gradient(135deg,#0f766e,#115e59);color:white;padding:20px 14px}
+header h1{margin:0;font-size:21px}header small{opacity:.85}
+nav{background:white;display:flex;gap:6px;padding:9px;overflow:auto;position:sticky;top:0;z-index:4;box-shadow:0 2px 8px #0001}
+nav a{white-space:nowrap;text-decoration:none;color:#315553;padding:9px 12px;border-radius:10px;font-size:12px}
+nav a:hover{background:#e7f4f2}
+main{max-width:1000px;margin:auto;padding:14px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:white;border-radius:17px;padding:16px;box-shadow:0 2px 10px #0001}.card small{color:#777}.num{font-size:22px;font-weight:bold;margin-top:7px}.green{color:#087f5b}.red{color:#c0392b}.blue{color:#1769aa}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.box{background:white;border-radius:17px;padding:15px;margin-top:14px;box-shadow:0 2px 10px #0001}
+h2{font-size:17px;margin:0 0 12px}.field{margin:7px 0}.field label{font-size:11px;color:#777;display:block;margin-bottom:4px}
+input,select{width:100%;padding:11px;border:1px solid #d8e0df;border-radius:10px;background:#fafcfc;font:inherit}
+button{border:0;border-radius:10px;padding:10px 14px;background:#0f766e;color:white;font:inherit;margin-top:7px}button.red{background:#c0392b}button.gray{background:#e7eeee;color:#17403e}
+.item{border-bottom:1px solid #eee;padding:11px 0}.item:last-child{border:0}.row{display:flex;justify-content:space-between;gap:8px;align-items:center}.muted{font-size:11px;color:#777}
+.flash{background:#dff6ef;color:#08684e;padding:10px;border-radius:10px;margin-bottom:10px;font-size:12px}
+a.logout{color:#fff;float:left;text-decoration:none;font-size:12px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<a class="logout" href="/logout">خروج</a>
+<h1>🍽️ کوماچ‌پزی مقدس</h1>
+<small>کاربر: {{session.username}} | {% if session.role=="owner" %}مالک 👑{% else %}همکار 👤{% endif %}</small>
+</header>
+
+<nav>
+<a href="#home">🏠 داشبورد</a>
+<a href="#sale">🍽️ فروش</a>
+<a href="#expense">💸 مصارف</a>
+<a href="#food">📋 غذاها</a>
+<a href="#customer">👤 مشتریان</a>
+{% if session.role=="owner" %}<a href="/users">👑 کاربران</a>{% endif %}
+</nav>
+
+<main id="home">
+{% with messages=get_flashed_messages() %}
+{% for m in messages %}<div class="flash">{{m}}</div>{% endfor %}
+{% endwith %}
+
+<div class="cards">
+<div class="card"><small>مجموع فروش</small><div class="num green">{{"{:,}".format(sales)}} افغانی</div></div>
+<div class="card"><small>مجموع مصارف</small><div class="num red">{{"{:,}".format(expenses)}} افغانی</div></div>
+<div class="card"><small>سود تقریبی</small><div class="num blue">{{"{:,}".format(profit)}} افغانی</div></div>
+<div class="card"><small>باقی نسیه</small><div class="num red">{{"{:,}".format(debt)}} افغانی</div></div>
+</div>
+
+<div class="grid">
+<section class="box" id="sale">
+<h2>🍽️ ثبت فروش</h2>
+<form method="post" action="/sale/add">
+<div class="field"><label>غذا</label>
+<select name="food_id">{% for f in foods %}<option value="{{f.id}}">{{f.name}} — {{f.price}} افغانی</option>{% endfor %}</select></div>
+<div class="field"><label>تعداد</label><input type="number" name="quantity" min="1" value="1" required></div>
+<button>ثبت فروش</button>
+</form>
+</section>
+
+<section class="box" id="expense">
+<h2>💸 ثبت مصرف</h2>
+<form method="post" action="/expense/add">
+<div class="field"><label>نام مصرف</label><input name="title" placeholder="مثلاً آرد" required></div>
+<div class="field"><label>مبلغ</label><input type="number" name="amount" min="0" placeholder="200" required></div>
+<div class="field"><label>توضیح</label><input name="note" placeholder="اختیاری"></div>
+<button>ثبت مصرف</button>
+</form>
+</section>
+</div>
+
+<section class="box" id="food">
+<h2>📋 غذاها و قیمت‌ها</h2>
+<form method="post" action="/food/add">
+<div class="grid">
+<input name="name" placeholder="نام غذا" required>
+<input type="number" name="price" placeholder="قیمت هر دانه" required>
+</div>
+<button>➕ اضافه کردن غذا</button>
+</form>
+
+{% for f in foods %}
+<div class="item">
+<div class="row"><b>{{f.name}}</b><b>{{"{:,}".format(f.price)}} افغانی</b></div>
+<form method="post" action="/food/edit/{{f.id}}" class="grid">
+<input name="name" value="{{f.name}}" required>
+<input type="number" name="price" value="{{f.price}}" required>
+<button>ذخیره تغییر</button>
+{% if session.role=="owner" %}<a href="/food/delete/{{f.id}}"><button type="button" class="red">حذف</button></a>{% endif %}
+</form>
+</div>
+{% endfor %}
+</section>
+
+<section class="box">
+<h2>🧾 فروش‌های اخیر</h2>
+{% for s in recent_sales %}
+<div class="item">
+<div class="row"><b>{{s.food_name}} × {{s.quantity}}</b><b class="green">{{"{:,}".format(s.total)}} افغانی</b></div>
+<div class="muted">{{s.created_at}} | هر دانه {{s.price}} افغانی</div>
+<a href="/sale/delete/{{s.id}}"><button class="red">حذف</button></a>
+</div>
+{% else %}<div class="muted">هنوز فروشی ثبت نشده.</div>{% endfor %}
+</section>
+
+<section class="box">
+<h2>💸 مصارف اخیر</h2>
+{% for e in recent_expenses %}
+<div class="item">
+<div class="row"><b>{{e.title}}</b><b class="red">{{"{:,}".format(e.amount)}} افغانی</b></div>
+<div class="muted">{{e.note}} | {{e.created_at}}</div>
+<a href="/expense/delete/{{e.id}}"><button class="red">حذف</button></a>
+</div>
+{% else %}<div class="muted">هنوز مصرفی ثبت نشده.</div>{% endfor %}
+</section>
+
+<section class="box" id="customer">
+<h2>👤 مشتریان نسیه</h2>
+<form method="post" action="/customer/add">
+<div class="grid">
+<input name="name" placeholder="نام مشتری" required>
+<input type="number" name="debt" placeholder="مبلغ نسیه" required>
+</div>
+<button>➕ ثبت مشتری</button>
+</form>
+{% for c in customers %}
+<div class="item">
+<div class="row"><b>{{c.name}}</b><b class="red">{{"{:,}".format(c.debt)}} افغانی</b></div>
+<form method="post" action="/customer/pay/{{c.id}}">
+<input type="number" name="amount" min="1" placeholder="مبلغ پرداختی" required>
+<button>ثبت پرداخت</button>
+</form>
+<a href="/customer/delete/{{c.id}}"><button class="red">حذف مشتری</button></a>
+</div>
+{% else %}<div class="muted">مشتری نسیه‌ای ثبت نشده.</div>{% endfor %}
+</section>
+
+</main>
+</body>
+</html>

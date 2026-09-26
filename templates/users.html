@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدیریت کاربران</title>
+<style>
+body{font-family:Tahoma;background:#f3f7f6;margin:0;color:#17302f}.box{max-width:600px;margin:20px auto;background:white;padding:20px;border-radius:18px}input{width:100%;box-sizing:border-box;padding:12px;margin:5px 0;border:1px solid #ddd;border-radius:10px;font:inherit}button{padding:11px 16px;background:#0f766e;color:#fff;border:0;border-radius:10px;margin-top:7px}a{color:#0f766e}.user{border-bottom:1px solid #eee;padding:13px 0}.del{background:#c0392b}
+</style>
+</head>
+<body>
+<div class="box">
+<a href="/dashboard">← برگشت به داشبورد</a>
+<h2>👑 مدیریت کاربران</h2>
+<form method="post">
+<input name="username" placeholder="نام کاربری همکار" required>
+<input name="password" placeholder="رمز عبور" required>
+<button>➕ ساخت همکار</button>
+</form>
+{% for u in users %}
+<div class="user">
+<b>{{u.username}}</b> — {{u.role}}
+{% if u.role != "owner" %}
+<a href="/user/delete/{{u.id}}"><button class="del">حذف</button></a>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</body>
+</html>
