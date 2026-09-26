@@ -1,16 +1,89 @@
 from flask import Flask, request, redirect, url_for, session, render_template, flash
 import sqlite3
+import os
 from functools import wraps
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "KUMACH_PAZI_MOQADDAS_SECRET_2026"
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "KUMACH_PAZI_MOQADDAS_SECRET_2026"
+)
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+class CompatRow(dict):
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+class CompatCursor:
+    def __init__(self, cursor):
+        self.cursor = cursor
+
+    def execute(self, sql, params=()):
+        if DATABASE_URL:
+            sql = sql.replace("?", "%s")
+        self.cursor.execute(sql, params)
+        return self
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        if DATABASE_URL:
+            return CompatRow(row)
+        return row
+
+    def fetchall(self):
+        rows = self.cursor.fetchall()
+        if DATABASE_URL:
+            return [CompatRow(row) for row in rows]
+        return rows
+
+class CompatDB:
+    def __init__(self):
+        if DATABASE_URL:
+            self.conn = psycopg2.connect(
+                DATABASE_URL,
+                cursor_factory=RealDictCursor
+            )
+        else:
+            self.conn = sqlite3.connect(DB)
+            self.conn.row_factory = sqlite3.Row
+
+    def execute(self, sql, params=()):
+        return CompatCursor(self.conn.cursor()).execute(sql, params)
+
+    def executescript(self, sql):
+        if DATABASE_URL:
+            sql = sql.replace(
+                "INTEGER PRIMARY KEY AUTOINCREMENT",
+                "SERIAL PRIMARY KEY"
+            )
+            for statement in sql.split(";"):
+                statement = statement.strip()
+                if statement:
+                    self.conn.cursor().execute(statement)
+        else:
+            self.conn.executescript(sql)
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
 DB = "kumach.db"
 
 def db():
-    c = sqlite3.connect(DB)
-    c.row_factory = sqlite3.Row
-    return c
+    return CompatDB()
+
 
 def init_db():
     c = db()
@@ -76,7 +149,7 @@ def init_db():
     for name, price in foods:
         try:
             c.execute("INSERT INTO foods(name,price) VALUES(?,?)",(name,price))
-        except sqlite3.IntegrityError:
+        except Exception:
             pass
 
     c.commit()
@@ -195,7 +268,7 @@ def add_food():
         )
         c.commit()
         flash("غذا اضافه شد.")
-    except sqlite3.IntegrityError:
+    except Exception:
         flash("این غذا قبلاً وجود دارد.")
     c.close()
 
@@ -317,7 +390,7 @@ def add_customer():
         )
         c.commit()
         flash("مشتری ثبت شد.")
-    except sqlite3.IntegrityError:
+    except Exception:
         flash("این مشتری قبلاً ثبت شده.")
 
     c.close()
@@ -372,7 +445,7 @@ def users():
             )
             c.commit()
             flash("کاربر جدید ساخته شد.")
-        except sqlite3.IntegrityError:
+        except Exception:
             flash("این نام کاربری قبلاً وجود دارد.")
 
     users = c.execute(
