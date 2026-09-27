@@ -27,6 +27,7 @@ button{width:100%;padding:13px;background:#0f766e;color:white;border:0;border-ra
 <input name="password" type="password" placeholder="رمز عبور" required>
 <button>ورود به حساب</button>
 </form>
+<div class="hint">مالک اولیه: owner / 1234<br>همکار اولیه: worker / 1234</div>
 </div>
 </body>
 </html>
